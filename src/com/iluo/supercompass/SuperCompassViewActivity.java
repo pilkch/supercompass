@@ -22,7 +22,7 @@ public class SuperCompassViewActivity extends Activity {
 
   private final SensorEventListener mListener = new SensorEventListener() {
     public void onSensorChanged(SensorEvent event) {
-      Log.d(TAG, "sensorChanged (" + event.values[0] + ", " + event.values[1] + ", " + event.values[2] + ")");
+      if (Build.debug) Log.d(TAG, "sensorChanged (" + event.values[0] + ", " + event.values[1] + ", " + event.values[2] + ")");
       if (mView != null) mView.SetCompassValues(event.values);
     }
 
