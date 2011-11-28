@@ -330,7 +330,9 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
     "varying vec2 vTextureCoord;\n" +
     "uniform sampler2D sTexture;\n" +
     "void main() {\n" +
-    "  gl_FragColor = texture2D(sTexture, vTextureCoord);\n" +
+    "  vec4 colour = texture2D(sTexture, vTextureCoord);" +
+    "  if (colour.a < 0.1) discard;" +
+    "  gl_FragColor = colour;\n" +
     "}\n";
 
   private float[] mMVPMatrix = new float[16];
