@@ -20,6 +20,60 @@ import android.util.Log;
 
 class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
 
+  class Texture
+  {
+    public Texture()
+    {
+      id = -1;
+    }
+
+    public void CreateFromResource(int idResource)
+    {
+      int[] textures = new int[1];
+      GLES20.glGenTextures(1, textures, 0);
+
+      id = textures[0];
+      GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, id);
+
+      GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+      GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+
+      GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_REPEAT);
+      GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_REPEAT);
+
+      InputStream is = mContext.getResources().openRawResource(idResource);
+      Bitmap bitmap;
+      try {
+        bitmap = BitmapFactory.decodeStream(is);
+      } finally {
+        try {
+          is.close();
+        } catch(IOException e) {
+          // Ignore.
+        }
+      }
+
+      GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
+      bitmap.recycle();
+    }
+
+    public void Destroy()
+    {
+    }
+
+    public void Bind()
+    {
+      GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, id);
+    }
+
+    public void UnBind()
+    {
+      GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+    }
+
+    private int id;
+  };
+
   private float[] mCompassValues;
 
   public GLES20TriangleRenderer(Context context) {
@@ -30,6 +84,8 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
     mContext = context;
     mTriangleVertices = ByteBuffer.allocateDirect(mTriangleVerticesData.length * FLOAT_SIZE_BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
     mTriangleVertices.put(mTriangleVerticesData).position(0);
+    textureModernDial = new Texture();
+    textureModernBody = new Texture();
   }
 
   public void SetCompassValues(float[] values)
@@ -45,31 +101,65 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
     GLES20.glUseProgram(mProgram);
     checkGlError("glUseProgram");
 
-    GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureID);
+    {
+      GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+      textureModernBody.Bind();
 
-    mTriangleVertices.position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
-    GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
-    checkGlError("glVertexAttribPointer maPosition");
-    mTriangleVertices.position(TRIANGLE_VERTICES_DATA_UV_OFFSET);
-    GLES20.glEnableVertexAttribArray(maPositionHandle);
-    checkGlError("glEnableVertexAttribArray maPositionHandle");
-    GLES20.glVertexAttribPointer(maTextureHandle, 2, GLES20.GL_FLOAT, false, TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
-    checkGlError("glVertexAttribPointer maTextureHandle");
-    GLES20.glEnableVertexAttribArray(maTextureHandle);
-    checkGlError("glEnableVertexAttribArray maTextureHandle");
+      mTriangleVertices.position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
+      GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
+      checkGlError("glVertexAttribPointer maPosition");
+      mTriangleVertices.position(TRIANGLE_VERTICES_DATA_UV_OFFSET);
+      GLES20.glEnableVertexAttribArray(maPositionHandle);
+      checkGlError("glEnableVertexAttribArray maPositionHandle");
+      GLES20.glVertexAttribPointer(maTextureHandle, 2, GLES20.GL_FLOAT, false, TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
+      checkGlError("glVertexAttribPointer maTextureHandle");
+      GLES20.glEnableVertexAttribArray(maTextureHandle);
+      checkGlError("glEnableVertexAttribArray maTextureHandle");
 
-    //long time = SystemClock.uptimeMillis() % 4000L;
-    final float angle = -mCompassValues[0];
+      final float angle = 0.0f;
 
-    Matrix.setRotateM(mMMatrix, 0, angle, 0, 0, 1.0f);
-    Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
-    Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
+      Matrix.setRotateM(mMMatrix, 0, angle, 0, 0, 1.0f);
+      Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
+      Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
 
-    GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
-    final int nVertices = 6;
-    GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, nVertices);
-    checkGlError("glDrawArrays");
+      GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
+      final int nVertices = 6;
+      GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, nVertices);
+      checkGlError("glDrawArrays");
+
+      GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+      textureModernBody.UnBind();
+    }
+
+    {
+      GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+      textureModernDial.Bind();
+
+      mTriangleVertices.position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
+      GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
+      checkGlError("glVertexAttribPointer maPosition");
+      mTriangleVertices.position(TRIANGLE_VERTICES_DATA_UV_OFFSET);
+      GLES20.glEnableVertexAttribArray(maPositionHandle);
+      checkGlError("glEnableVertexAttribArray maPositionHandle");
+      GLES20.glVertexAttribPointer(maTextureHandle, 2, GLES20.GL_FLOAT, false, TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
+      checkGlError("glVertexAttribPointer maTextureHandle");
+      GLES20.glEnableVertexAttribArray(maTextureHandle);
+      checkGlError("glEnableVertexAttribArray maTextureHandle");
+
+      final float angle = -mCompassValues[0];
+
+      Matrix.setRotateM(mMMatrix, 0, angle, 0, 0, 1.0f);
+      Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
+      Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
+
+      GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
+      final int nVertices = 6;
+      GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, nVertices);
+      checkGlError("glDrawArrays");
+
+      GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+      textureModernDial.UnBind();
+    }
   }
 
   public void onSurfaceChanged(GL10 glUnused, int width, int height) {
@@ -103,37 +193,8 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
       throw new RuntimeException("Could not get attrib location for uMVPMatrix");
     }
 
-    /*
-     * Create our texture. This has to be done each time the
-     * surface is created.
-     */
-
-    int[] textures = new int[1];
-    GLES20.glGenTextures(1, textures, 0);
-
-    mTextureID = textures[0];
-    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureID);
-
-    GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-    GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-
-    GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_REPEAT);
-    GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_REPEAT);
-
-    InputStream is = mContext.getResources().openRawResource(R.raw.modern);
-    Bitmap bitmap;
-    try {
-      bitmap = BitmapFactory.decodeStream(is);
-    } finally {
-      try {
-        is.close();
-      } catch(IOException e) {
-        // Ignore.
-      }
-    }
-
-    GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
-    bitmap.recycle();
+    textureModernDial.CreateFromResource(R.raw.modern);
+    textureModernBody.CreateFromResource(R.raw.modern_body);
 
     Matrix.setLookAtM(mVMatrix, 0, 0, 0, -5, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
   }
@@ -231,9 +292,10 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
   private float[] mVMatrix = new float[16];
 
   private int mProgram;
-  private int mTextureID;
   private int muMVPMatrixHandle;
   private int maPositionHandle;
+  private Texture textureModernDial;
+  private Texture textureModernBody;
   private int maTextureHandle;
 
   private Context mContext;
