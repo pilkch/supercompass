@@ -294,25 +294,25 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
   private static final int TRIANGLE_VERTICES_DATA_UV_OFFSET = 3;
   private final float[] mTriangleVerticesDataDial = {
     // X, Y, Z, U, V
-    -0.5f,  0.5f, 0.0f, 1.0f, 0.0f,
+    -0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
     -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
-    0.5f, 0.5f, 0.0f, 0.0f, 0.0f,
-    -0.5f, -0.5f, 0.0f, 1.0f, 1.0f,
     0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-    0.5f,  -0.5f, 0.0f, 0.0f, 1.0f
+    -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
+    0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
+    0.5f,  -0.5f, 0.0f, 1.0f, 1.0f
   };
   private final float fModernBodyWidth = 1.4f;
-  private final float fModernBodyHeight = 3.0f;
+  private final float fModernBodyHeight = 4.0f;
   private final float fModernBodyHalfWidth = fModernBodyWidth / 2.0f;
   private final float fModernBodyHalfHeight = fModernBodyHeight / 2.0f;
   private final float[] mTriangleVerticesDataBody = {
     // X, Y, Z, U, V
     -fModernBodyHalfWidth, fModernBodyHalfHeight, 0.0f, 1.0f, 0.0f,
     -fModernBodyHalfWidth, -fModernBodyHalfHeight, 0.0f, 1.0f, 1.0f,
-    fModernBodyHalfWidth, fModernBodyHalfHeight, 0.0f, 0.0f, 0.0f,
+    fModernBodyHalfWidth, fModernBodyHalfHeight, 0.0f, 0.5f, 0.0f,
     -fModernBodyHalfWidth, -fModernBodyHalfHeight, 0.0f, 1.0f, 1.0f,
-    fModernBodyHalfWidth, fModernBodyHalfHeight, 0.0f, 0.0f, 0.0f,
-    fModernBodyHalfWidth,  -fModernBodyHalfHeight, 0.0f, 0.0f, 1.0f
+    fModernBodyHalfWidth, fModernBodyHalfHeight, 0.0f, 0.5f, 0.0f,
+    fModernBodyHalfWidth,  -fModernBodyHalfHeight, 0.0f, 0.5f, 1.0f
   };
 
   private final String mVertexShader =
