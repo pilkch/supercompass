@@ -74,7 +74,45 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
     private int id;
   };
 
-  private float[] mCompassValues;
+  class VertexBuffer
+  {
+    public void CreateFromMemory(float[] triangleVerticesData)
+    {
+      mTriangleVertices = ByteBuffer.allocateDirect(triangleVerticesData.length * FLOAT_SIZE_BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
+      mTriangleVertices.put(triangleVerticesData).position(0);
+    }
+
+    public void Destroy()
+    {
+    }
+
+    public void Bind()
+    {
+      mTriangleVertices.position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
+      GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
+      checkGlError("glVertexAttribPointer maPosition");
+      mTriangleVertices.position(TRIANGLE_VERTICES_DATA_UV_OFFSET);
+      GLES20.glEnableVertexAttribArray(maPositionHandle);
+      checkGlError("glEnableVertexAttribArray maPositionHandle");
+      GLES20.glVertexAttribPointer(maTextureHandle, 2, GLES20.GL_FLOAT, false, TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
+      checkGlError("glVertexAttribPointer maTextureHandle");
+      GLES20.glEnableVertexAttribArray(maTextureHandle);
+      checkGlError("glEnableVertexAttribArray maTextureHandle");
+    }
+
+    public void Render()
+    {
+      final int nVertices = 6;
+      GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, nVertices);
+      checkGlError("glDrawArrays");
+    }
+
+    public void UnBind()
+    {
+    }
+
+    private FloatBuffer mTriangleVertices;
+  };
 
   public GLES20TriangleRenderer(Context context) {
     mCompassValues = new float[3];
@@ -82,10 +120,12 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
     mCompassValues[1] = 0.0f;
     mCompassValues[2] = 0.0f;
     mContext = context;
-    mTriangleVertices = ByteBuffer.allocateDirect(mTriangleVerticesData.length * FLOAT_SIZE_BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
-    mTriangleVertices.put(mTriangleVerticesData).position(0);
     textureModernDial = new Texture();
     textureModernBody = new Texture();
+    vertexBufferDial = new VertexBuffer();
+    vertexBufferDial.CreateFromMemory(mTriangleVerticesDataDial);
+    vertexBufferBody = new VertexBuffer();
+    vertexBufferBody.CreateFromMemory(mTriangleVerticesDataBody);
   }
 
   public void SetCompassValues(float[] values)
@@ -105,27 +145,19 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
       GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
       textureModernBody.Bind();
 
-      mTriangleVertices.position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
-      GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
-      checkGlError("glVertexAttribPointer maPosition");
-      mTriangleVertices.position(TRIANGLE_VERTICES_DATA_UV_OFFSET);
-      GLES20.glEnableVertexAttribArray(maPositionHandle);
-      checkGlError("glEnableVertexAttribArray maPositionHandle");
-      GLES20.glVertexAttribPointer(maTextureHandle, 2, GLES20.GL_FLOAT, false, TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
-      checkGlError("glVertexAttribPointer maTextureHandle");
-      GLES20.glEnableVertexAttribArray(maTextureHandle);
-      checkGlError("glEnableVertexAttribArray maTextureHandle");
+      vertexBufferBody.Bind();
 
-      final float angle = 0.0f;
+      float[] mMMatrix = new float[16];
+      Matrix.setIdentityM(mMMatrix, 0);
 
-      Matrix.setRotateM(mMMatrix, 0, angle, 0, 0, 1.0f);
       Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
       Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
 
       GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
-      final int nVertices = 6;
-      GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, nVertices);
-      checkGlError("glDrawArrays");
+
+      vertexBufferBody.Render();
+
+      vertexBufferBody.UnBind();
 
       GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
       textureModernBody.UnBind();
@@ -135,27 +167,29 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
       GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
       textureModernDial.Bind();
 
-      mTriangleVertices.position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
-      GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
-      checkGlError("glVertexAttribPointer maPosition");
-      mTriangleVertices.position(TRIANGLE_VERTICES_DATA_UV_OFFSET);
-      GLES20.glEnableVertexAttribArray(maPositionHandle);
-      checkGlError("glEnableVertexAttribArray maPositionHandle");
-      GLES20.glVertexAttribPointer(maTextureHandle, 2, GLES20.GL_FLOAT, false, TRIANGLE_VERTICES_DATA_STRIDE_BYTES, mTriangleVertices);
-      checkGlError("glVertexAttribPointer maTextureHandle");
-      GLES20.glEnableVertexAttribArray(maTextureHandle);
-      checkGlError("glEnableVertexAttribArray maTextureHandle");
+      vertexBufferDial.Bind();
 
+      float[] mRotationMatrix = new float[16];
+      Matrix.setIdentityM(mRotationMatrix, 0);
       final float angle = -mCompassValues[0];
+      Matrix.rotateM(mRotationMatrix, 0, angle, 0, 0, 1.0f);
 
-      Matrix.setRotateM(mMMatrix, 0, angle, 0, 0, 1.0f);
+      float[] mTranslationMatrix = new float[16];
+      Matrix.setIdentityM(mTranslationMatrix, 0);
+      final float y = -0.5f;
+      Matrix.translateM(mTranslationMatrix, 0, 0.0f, y, 0.0f);
+
+      float[] mMMatrix = new float[16];
+      Matrix.multiplyMM(mMMatrix, 0, mTranslationMatrix, 0, mRotationMatrix, 0);
+
       Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
       Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
 
       GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
-      final int nVertices = 6;
-      GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, nVertices);
-      checkGlError("glDrawArrays");
+
+      vertexBufferDial.Render();
+
+      vertexBufferDial.UnBind();
 
       GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
       textureModernDial.UnBind();
@@ -252,11 +286,13 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
     }
   }
 
+  private float[] mCompassValues;
+
   private static final int FLOAT_SIZE_BYTES = 4;
   private static final int TRIANGLE_VERTICES_DATA_STRIDE_BYTES = 5 * FLOAT_SIZE_BYTES;
   private static final int TRIANGLE_VERTICES_DATA_POS_OFFSET = 0;
   private static final int TRIANGLE_VERTICES_DATA_UV_OFFSET = 3;
-  private final float[] mTriangleVerticesData = {
+  private final float[] mTriangleVerticesDataDial = {
     // X, Y, Z, U, V
     -0.5f,  0.5f, 0.0f, 1.0f, 0.0f,
     -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
@@ -265,8 +301,19 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
     0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
     0.5f,  -0.5f, 0.0f, 0.0f, 1.0f
   };
-
-  private FloatBuffer mTriangleVertices;
+  private final float fModernBodyWidth = 1.4f;
+  private final float fModernBodyHeight = 3.0f;
+  private final float fModernBodyHalfWidth = fModernBodyWidth / 2.0f;
+  private final float fModernBodyHalfHeight = fModernBodyHeight / 2.0f;
+  private final float[] mTriangleVerticesDataBody = {
+    // X, Y, Z, U, V
+    -fModernBodyHalfWidth, fModernBodyHalfHeight, 0.0f, 1.0f, 0.0f,
+    -fModernBodyHalfWidth, -fModernBodyHalfHeight, 0.0f, 1.0f, 1.0f,
+    fModernBodyHalfWidth, fModernBodyHalfHeight, 0.0f, 0.0f, 0.0f,
+    -fModernBodyHalfWidth, -fModernBodyHalfHeight, 0.0f, 1.0f, 1.0f,
+    fModernBodyHalfWidth, fModernBodyHalfHeight, 0.0f, 0.0f, 0.0f,
+    fModernBodyHalfWidth,  -fModernBodyHalfHeight, 0.0f, 0.0f, 1.0f
+  };
 
   private final String mVertexShader =
     "uniform mat4 uMVPMatrix;\n" +
@@ -288,14 +335,15 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
 
   private float[] mMVPMatrix = new float[16];
   private float[] mProjMatrix = new float[16];
-  private float[] mMMatrix = new float[16];
   private float[] mVMatrix = new float[16];
 
   private int mProgram;
   private int muMVPMatrixHandle;
-  private int maPositionHandle;
   private Texture textureModernDial;
   private Texture textureModernBody;
+  private VertexBuffer vertexBufferDial;
+  private VertexBuffer vertexBufferBody;
+  private int maPositionHandle;
   private int maTextureHandle;
 
   private Context mContext;
