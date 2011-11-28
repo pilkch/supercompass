@@ -2,6 +2,7 @@ package com.iluo.supercompass;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 
 import android.hardware.Sensor;
@@ -37,6 +38,7 @@ public class SuperCompassViewActivity extends Activity {
     setContentView(mView);
     mSensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
     mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
   }
 
   @Override
