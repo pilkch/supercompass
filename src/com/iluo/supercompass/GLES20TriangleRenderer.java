@@ -120,10 +120,10 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
     mCompassValues[1] = 0.0f;
     mCompassValues[2] = 0.0f;
     mContext = context;
-    textureModernDial = new Texture();
+    textureModernNeedle = new Texture();
     textureModernBody = new Texture();
-    vertexBufferDial = new VertexBuffer();
-    vertexBufferDial.CreateFromMemory(mTriangleVerticesDataDial);
+    vertexBufferNeedle = new VertexBuffer();
+    vertexBufferNeedle.CreateFromMemory(mTriangleVerticesDataNeedle);
     vertexBufferBody = new VertexBuffer();
     vertexBufferBody.CreateFromMemory(mTriangleVerticesDataBody);
   }
@@ -165,9 +165,9 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
 
     {
       GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-      textureModernDial.Bind();
+      textureModernNeedle.Bind();
 
-      vertexBufferDial.Bind();
+      vertexBufferNeedle.Bind();
 
       float[] mRotationMatrix = new float[16];
       Matrix.setIdentityM(mRotationMatrix, 0);
@@ -187,12 +187,12 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
 
       GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
 
-      vertexBufferDial.Render();
+      vertexBufferNeedle.Render();
 
-      vertexBufferDial.UnBind();
+      vertexBufferNeedle.UnBind();
 
       GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-      textureModernDial.UnBind();
+      textureModernNeedle.UnBind();
     }
   }
 
@@ -227,7 +227,7 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
       throw new RuntimeException("Could not get attrib location for uMVPMatrix");
     }
 
-    textureModernDial.CreateFromResource(R.raw.modern);
+    textureModernNeedle.CreateFromResource(R.raw.modern_needle);
     textureModernBody.CreateFromResource(R.raw.modern_body);
 
     Matrix.setLookAtM(mVMatrix, 0, 0, 0, -5, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
@@ -292,7 +292,7 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
   private static final int TRIANGLE_VERTICES_DATA_STRIDE_BYTES = 5 * FLOAT_SIZE_BYTES;
   private static final int TRIANGLE_VERTICES_DATA_POS_OFFSET = 0;
   private static final int TRIANGLE_VERTICES_DATA_UV_OFFSET = 3;
-  private final float[] mTriangleVerticesDataDial = {
+  private final float[] mTriangleVerticesDataNeedle = {
     // X, Y, Z, U, V
     -0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
     -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
@@ -341,9 +341,9 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
 
   private int mProgram;
   private int muMVPMatrixHandle;
-  private Texture textureModernDial;
+  private Texture textureModernNeedle;
   private Texture textureModernBody;
-  private VertexBuffer vertexBufferDial;
+  private VertexBuffer vertexBufferNeedle;
   private VertexBuffer vertexBufferBody;
   private int maPositionHandle;
   private int maTextureHandle;
