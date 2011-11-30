@@ -1,4 +1,4 @@
-package com.iluo.supercompass;
+package net.iluo.supercompass;
 
 import java.io.IOException;
 import java.io.InputStream;

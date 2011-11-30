@@ -1,4 +1,4 @@
-package com.iluo.supercompass;
+package net.iluo.supercompass;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;

@@ -1,4 +1,4 @@
-package com.iluo.supercompass;
+package net.iluo.supercompass;
 
 public class Build
 {
