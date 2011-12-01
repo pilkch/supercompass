@@ -5,5 +5,9 @@
 
 <resources>
   <string name="app_name">Super Compass</string>
+  <string name="style_orienteering">Orienteering</string>
+  <string name="style_orienteering_with_map">Orienteering with Map</string>
+  <string name="style_navigator">Navigator</string>
+  <string name="style">Style</string>
 </resources>
 

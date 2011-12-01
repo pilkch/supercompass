@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+   <item android:id="@+id/style"
+         android:title="@string/style" >
+       <!-- "style" submenu -->
+       <menu>
+         <group android:id="@+id/style_group"
+                android:checkableBehavior="single">
+           <item android:id="@+id/style_orienteering"
+                 android:title="@string/style_orienteering"
+                 android:checked="true" />
+           <item android:id="@+id/style_orienteering_with_map"
+                 android:title="@string/style_orienteering_with_map" />
+           <item android:id="@+id/style_navigator"
+                 android:title="@string/style_navigator" />
+         </group>
+       </menu>
+   </item>
+</menu>

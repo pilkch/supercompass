@@ -10,6 +10,9 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 
 public class SuperCompassViewActivity extends Activity {
@@ -62,4 +65,32 @@ public class SuperCompassViewActivity extends Activity {
     mSensorManager.unregisterListener(mListener);
     super.onStop();
   }
+
+
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+   MenuInflater inflater = getMenuInflater();
+   inflater.inflate(R.menu.menu_options, menu);
+   return true;
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+      case R.id.style_orienteering:
+      case R.id.style_orienteering_with_map:
+        // TODO: IS THIS NEEDED?  CAN WE JUST USE THE VALUE OF item.isChecked() and not worry about item.setChecked()?
+        item.setChecked(!item.isChecked());
+        return true;
+      default:
+        return super.onOptionsItemSelected(item);
+    }
+  }
+
+  /*@Override
+  public void onGroupItemClick(MenuItem item) {
+    // One of the group items (using the onClick attribute) was clicked
+    // The item parameter passed here indicates which item it is
+    // All other menu item clicks are handled by onOptionsItemSelected()
+  }*/
 }
