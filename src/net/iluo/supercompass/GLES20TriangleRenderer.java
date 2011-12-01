@@ -154,7 +154,9 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
   }
 
 
-  public GLES20TriangleRenderer(Context context) {
+  public GLES20TriangleRenderer(Context context)
+  {
+    mStyle = Settings.STYLE.ORIENTEERING;
     mCompassValues = new float[3];
     mCompassValues[0] = 0.0f;
     mCompassValues[1] = 0.0f;
@@ -185,6 +187,11 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
     }
   }
 
+  public void SetStyle(Settings.STYLE style)
+  {
+    mStyle = style;
+  }
+
   public void SetCompassValues(float[] values)
   {
     mCompassValues = values;
@@ -193,7 +200,9 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
   public void onDrawFrame(GL10 glUnused) {
     // Ignore the passed-in GL10 interface, and use the GLES20
     // class's static methods instead.
-    GLES20.glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+    if (mStyle == Settings.STYLE.ORIENTEERING) GLES20.glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+    else if (mStyle == Settings.STYLE.ORIENTEERING_WITH_MAP) GLES20.glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+    else GLES20.glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
     GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
     GLES20.glUseProgram(mProgram);
     checkGlError("glUseProgram");
@@ -343,6 +352,7 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
     }
   }
 
+  Settings.STYLE mStyle;
   private float[] mCompassValues;
 
   private static final int FLOAT_SIZE_BYTES = 4;

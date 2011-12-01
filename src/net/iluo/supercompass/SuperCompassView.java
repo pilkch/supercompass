@@ -13,6 +13,11 @@ class SuperCompassView extends GLSurfaceView {
     setRenderer(mRenderer);
   }
 
+  public void SetStyle(Settings.STYLE style)
+  {
+    mRenderer.SetStyle(style);
+  }
+
   public void SetCompassValues(float[] values)
   {
     mRenderer.SetCompassValues(values);

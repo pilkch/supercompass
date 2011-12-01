@@ -38,6 +38,12 @@ public class SuperCompassViewActivity extends Activity {
   protected void onCreate(Bundle icicle) {
     super.onCreate(icicle);
     mView = new SuperCompassView(getApplication());
+
+    // Set the style for the view to render
+    Settings settings = new Settings(this);
+    Settings.STYLE style = settings.GetStyle();
+    mView.SetStyle(style);
+
     setContentView(mView);
     mSensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
     mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
@@ -75,16 +81,52 @@ public class SuperCompassViewActivity extends Activity {
   }
 
   @Override
+  public boolean onPrepareOptionsMenu(Menu menu) {
+    boolean result = super.onPrepareOptionsMenu(menu);
+
+    Settings settings = new Settings(this);
+    Settings.STYLE style = settings.GetStyle();
+
+    switch (style) {
+      case ORIENTEERING: {
+        MenuItem item = menu.findItem(R.id.style_orienteering);
+        if (item != null) item.setChecked(true);
+        break;
+      }
+      case ORIENTEERING_WITH_MAP: {
+          MenuItem item = menu.findItem(R.id.style_orienteering_with_map);
+          if (item != null) item.setChecked(true);
+          break;
+        }
+      case NAVIGATOR: {
+          MenuItem item = menu.findItem(R.id.style_navigator);
+          if (item != null) item.setChecked(true);
+          break;
+        }
+    }
+
+    return result;
+  }
+
+  @Override
   public boolean onOptionsItemSelected(MenuItem item) {
+    Settings settings = new Settings(this);
     switch (item.getItemId()) {
       case R.id.style_orienteering:
-      case R.id.style_orienteering_with_map:
-        // TODO: IS THIS NEEDED?  CAN WE JUST USE THE VALUE OF item.isChecked() and not worry about item.setChecked()?
-        item.setChecked(!item.isChecked());
+        settings.SetStyle(Settings.STYLE.ORIENTEERING);
+        mView.SetStyle(Settings.STYLE.ORIENTEERING);
         return true;
-      default:
-        return super.onOptionsItemSelected(item);
+      case R.id.style_orienteering_with_map:
+        settings.SetStyle(Settings.STYLE.ORIENTEERING_WITH_MAP);
+        mView.SetStyle(Settings.STYLE.ORIENTEERING_WITH_MAP);
+        return true;
+      case R.id.style_navigator:
+        settings.SetStyle(Settings.STYLE.NAVIGATOR);
+        mView.SetStyle(Settings.STYLE.NAVIGATOR);
+        return true;
     }
+
+    return super.onOptionsItemSelected(item);
   }
 
   /*@Override
