@@ -1,5 +1,7 @@
 package net.iluo.supercompass;
 
+import net.iluo.supercompass.R;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -76,10 +78,10 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
 
   class VertexBuffer
   {
-    public void CreateFromMemory(float[] triangleVerticesData)
+    public void CreateFromMemory(FloatBuffer buffer)
     {
-      mTriangleVertices = ByteBuffer.allocateDirect(triangleVerticesData.length * FLOAT_SIZE_BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
-      mTriangleVertices.put(triangleVerticesData).position(0);
+      mTriangleVertices = ByteBuffer.allocateDirect(buffer.capacity() * FLOAT_SIZE_BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
+      mTriangleVertices.put(buffer).position(0);
     }
 
     public void Destroy()
@@ -114,6 +116,44 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
     private FloatBuffer mTriangleVertices;
   };
 
+  class GeometryBuilder
+  {
+    GeometryBuilder()
+    {
+      buffer = FloatBuffer.allocate(100);
+    }
+
+    public void PushBackRectangle(float x, float y, float width, float height)
+    {
+      PushBackRectangle(x, y, width, height, 0.0f, 0.0f, 1.0f, 1.0f);
+    }
+
+    public void PushBackRectangle(float x, float y, float width, float height, float fU, float fV, float fU2, float fV2)
+    {
+      final float fHalfWidth = width / 2.0f;
+      final float fHalfHeight = height / 2.0f;
+      final float[] vertices = {
+        // X, Y, Z, U, V
+        x - fHalfWidth, y + fHalfHeight, 0.0f, fU, fV,
+        x - fHalfWidth, y - fHalfHeight, 0.0f, fU, fV2,
+        x + fHalfWidth, y + fHalfHeight, 0.0f, fU2, fV,
+        x - fHalfWidth, y - fHalfHeight, 0.0f, fU, fV2,
+        x + fHalfWidth, y + fHalfHeight, 0.0f, fU2, fV,
+        x + fHalfWidth, y - fHalfHeight, 0.0f, fU2, fV2
+      };
+      buffer.put(vertices);
+    }
+
+    public FloatBuffer GetBuffer()
+    {
+      buffer.position(0);
+      return buffer;
+    }
+
+    private FloatBuffer buffer;
+  }
+
+
   public GLES20TriangleRenderer(Context context) {
     mCompassValues = new float[3];
     mCompassValues[0] = 0.0f;
@@ -122,10 +162,27 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
     mContext = context;
     textureModernNeedle = new Texture();
     textureModernBody = new Texture();
-    vertexBufferNeedle = new VertexBuffer();
-    vertexBufferNeedle.CreateFromMemory(mTriangleVerticesDataNeedle);
-    vertexBufferBody = new VertexBuffer();
-    vertexBufferBody.CreateFromMemory(mTriangleVerticesDataBody);
+
+    {
+      GeometryBuilder builder = new GeometryBuilder();
+      final float x = 0.0f;
+      final float y = 0.0f;
+      final float width = 1.4f;
+      final float height = 1.4f;
+      builder.PushBackRectangle(x, y, width, height);
+      vertexBufferNeedle = new VertexBuffer();
+      vertexBufferNeedle.CreateFromMemory(builder.GetBuffer());
+    }
+    {
+      GeometryBuilder builder = new GeometryBuilder();
+      final float x = 0.0f;
+      final float y = -0.5f;
+      final float width = 1.4f;
+      final float height = 3.0f;
+      builder.PushBackRectangle(x, y, width, height, 0.5f, 0.0f, 1.0f, 1.0f);
+      vertexBufferBody = new VertexBuffer();
+      vertexBufferBody.CreateFromMemory(builder.GetBuffer());
+    }
   }
 
   public void SetCompassValues(float[] values)
@@ -292,28 +349,6 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
   private static final int TRIANGLE_VERTICES_DATA_STRIDE_BYTES = 5 * FLOAT_SIZE_BYTES;
   private static final int TRIANGLE_VERTICES_DATA_POS_OFFSET = 0;
   private static final int TRIANGLE_VERTICES_DATA_UV_OFFSET = 3;
-  private final float[] mTriangleVerticesDataNeedle = {
-    // X, Y, Z, U, V
-    -0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
-    -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
-    0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-    -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
-    0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-    0.5f,  -0.5f, 0.0f, 1.0f, 1.0f
-  };
-  private final float fModernBodyWidth = 1.4f;
-  private final float fModernBodyHeight = 4.0f;
-  private final float fModernBodyHalfWidth = fModernBodyWidth / 2.0f;
-  private final float fModernBodyHalfHeight = fModernBodyHeight / 2.0f;
-  private final float[] mTriangleVerticesDataBody = {
-    // X, Y, Z, U, V
-    -fModernBodyHalfWidth, fModernBodyHalfHeight, 0.0f, 1.0f, 0.0f,
-    -fModernBodyHalfWidth, -fModernBodyHalfHeight, 0.0f, 1.0f, 1.0f,
-    fModernBodyHalfWidth, fModernBodyHalfHeight, 0.0f, 0.5f, 0.0f,
-    -fModernBodyHalfWidth, -fModernBodyHalfHeight, 0.0f, 1.0f, 1.0f,
-    fModernBodyHalfWidth, fModernBodyHalfHeight, 0.0f, 0.5f, 0.0f,
-    fModernBodyHalfWidth,  -fModernBodyHalfHeight, 0.0f, 0.5f, 1.0f
-  };
 
   private final String mVertexShader =
     "uniform mat4 uMVPMatrix;\n" +
