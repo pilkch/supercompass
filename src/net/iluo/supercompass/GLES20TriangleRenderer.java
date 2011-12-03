@@ -157,6 +157,7 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
   public GLES20TriangleRenderer(Context context)
   {
     mStyle = Settings.STYLE.ORIENTEERING;
+    mDialAngle = 0.0f;
     mCompassValues = new float[3];
     mCompassValues[0] = 0.0f;
     mCompassValues[1] = 0.0f;
@@ -178,12 +179,22 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
     {
       GeometryBuilder builder = new GeometryBuilder();
       final float x = 0.0f;
-      final float y = -0.5f;
+      final float y = -0.7f;
       final float width = 1.4f;
-      final float height = 3.0f;
+      final float height = 3.2f;
       builder.PushBackRectangle(x, y, width, height, 0.5f, 0.0f, 1.0f, 1.0f);
       vertexBufferOrienteeringBody = new VertexBuffer();
       vertexBufferOrienteeringBody.CreateFromMemory(builder.GetBuffer());
+    }
+    {
+      GeometryBuilder builder = new GeometryBuilder();
+      final float x = 0.0f;
+      final float y = 0.0f;
+      final float width = 1.4f;
+      final float height = 1.4f;
+      builder.PushBackRectangle(x, y, width, height, 0.0f, 0.0f, 0.5f, 0.5f);
+      vertexBufferOrienteeringDial = new VertexBuffer();
+      vertexBufferOrienteeringDial.CreateFromMemory(builder.GetBuffer());
     }
     {
       GeometryBuilder builder = new GeometryBuilder();
@@ -200,6 +211,11 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
   public void SetStyle(Settings.STYLE style)
   {
     mStyle = style;
+  }
+
+  public void SetDialAngle(float angle)
+  {
+    mDialAngle = angle;
   }
 
   public void SetCompassValues(float[] values)
@@ -259,12 +275,38 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
       }
 
       {
+        vertexBufferOrienteeringDial.Bind();
+
+        float[] mRotationMatrix = new float[16];
+        Matrix.setIdentityM(mRotationMatrix, 0);
+        final float fAngle = mDialAngle;
+        Matrix.rotateM(mRotationMatrix, 0, fAngle, 0, 0, 1.0f);
+
+        float[] mTranslationMatrix = new float[16];
+        Matrix.setIdentityM(mTranslationMatrix, 0);
+        final float y = -0.5f;
+        Matrix.translateM(mTranslationMatrix, 0, 0.0f, y, 0.0f);
+
+        float[] mMMatrix = new float[16];
+        Matrix.multiplyMM(mMMatrix, 0, mTranslationMatrix, 0, mRotationMatrix, 0);
+
+        Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
+        Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
+
+        GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
+
+        vertexBufferOrienteeringDial.Render();
+
+        vertexBufferOrienteeringDial.UnBind();
+      }
+
+      {
         vertexBufferOrienteeringNeedle.Bind();
 
         float[] mRotationMatrix = new float[16];
         Matrix.setIdentityM(mRotationMatrix, 0);
-        final float angle = -mCompassValues[0];
-        Matrix.rotateM(mRotationMatrix, 0, angle, 0, 0, 1.0f);
+        final float fAngle = -mCompassValues[0];
+        Matrix.rotateM(mRotationMatrix, 0, fAngle, 0, 0, 1.0f);
 
         float[] mTranslationMatrix = new float[16];
         Matrix.setIdentityM(mTranslationMatrix, 0);
@@ -380,6 +422,7 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
   }
 
   Settings.STYLE mStyle;
+  private float mDialAngle;
   private float[] mCompassValues;
 
   private static final int FLOAT_SIZE_BYTES = 4;
@@ -417,6 +460,7 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
   private Texture textureOrienteering;
   private VertexBuffer vertexBufferOrienteeringMap;
   private VertexBuffer vertexBufferOrienteeringBody;
+  private VertexBuffer vertexBufferOrienteeringDial;
   private VertexBuffer vertexBufferOrienteeringNeedle;
   private int maPositionHandle;
   private int maTextureHandle;
