@@ -125,7 +125,7 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
 
     public void PushBackRectangle(float x, float y, float width, float height)
     {
-      PushBackRectangle(x, y, width, height, 0.0f, 0.0f, 1.0f, 1.0f);
+      PushBackRectangle(x, y, width, height, 1.0f, 0.0f, 0.0f, 1.0f);
     }
 
     public void PushBackRectangle(float x, float y, float width, float height, float fU, float fV, float fU2, float fV2)
@@ -163,17 +163,18 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
     mCompassValues[2] = 0.0f;
     mContext = context;
     textureModernNeedle = new Texture();
+    textureOrienteeringMap = new Texture();
     textureModernBody = new Texture();
 
     {
       GeometryBuilder builder = new GeometryBuilder();
       final float x = 0.0f;
       final float y = 0.0f;
-      final float width = 1.4f;
-      final float height = 1.4f;
-      builder.PushBackRectangle(x, y, width, height);
-      vertexBufferNeedle = new VertexBuffer();
-      vertexBufferNeedle.CreateFromMemory(builder.GetBuffer());
+      final float width = 2.0f;
+      final float height = 3.4f;
+      builder.PushBackRectangle(x, y, width, height, 1.0f, 0.0f, 0.0f, 1.0f);
+      vertexBufferOrienteeringMap = new VertexBuffer();
+      vertexBufferOrienteeringMap.CreateFromMemory(builder.GetBuffer());
     }
     {
       GeometryBuilder builder = new GeometryBuilder();
@@ -184,6 +185,16 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
       builder.PushBackRectangle(x, y, width, height, 0.5f, 0.0f, 1.0f, 1.0f);
       vertexBufferBody = new VertexBuffer();
       vertexBufferBody.CreateFromMemory(builder.GetBuffer());
+    }
+    {
+      GeometryBuilder builder = new GeometryBuilder();
+      final float x = 0.0f;
+      final float y = 0.0f;
+      final float width = 1.4f;
+      final float height = 1.4f;
+      builder.PushBackRectangle(x, y, width, height);
+      vertexBufferNeedle = new VertexBuffer();
+      vertexBufferNeedle.CreateFromMemory(builder.GetBuffer());
     }
   }
 
@@ -200,12 +211,33 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
   public void onDrawFrame(GL10 glUnused) {
     // Ignore the passed-in GL10 interface, and use the GLES20
     // class's static methods instead.
-    if (mStyle == Settings.STYLE.ORIENTEERING) GLES20.glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-    else if (mStyle == Settings.STYLE.ORIENTEERING_WITH_MAP) GLES20.glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
-    else GLES20.glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+
+    GLES20.glClearColor(100.0f / 255.0f, 149.0f / 255.0f, 237.0f / 255.0f, 1.0f);
     GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
     GLES20.glUseProgram(mProgram);
     checkGlError("glUseProgram");
+
+    if (mStyle == Settings.STYLE.ORIENTEERING_WITH_MAP) {
+      GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+      textureOrienteeringMap.Bind();
+
+      vertexBufferOrienteeringMap.Bind();
+
+      float[] mMMatrix = new float[16];
+      Matrix.setIdentityM(mMMatrix, 0);
+
+      Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
+      Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
+
+      GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
+
+      vertexBufferOrienteeringMap.Render();
+
+      vertexBufferOrienteeringMap.UnBind();
+
+      GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+      textureOrienteeringMap.UnBind();
+    }
 
     {
       GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
@@ -294,6 +326,7 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
     }
 
     textureModernNeedle.CreateFromResource(R.raw.modern_needle);
+    textureOrienteeringMap.CreateFromResource(R.raw.orienteering_map);
     textureModernBody.CreateFromResource(R.raw.modern_body);
 
     Matrix.setLookAtM(mVMatrix, 0, 0, 0, -5, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
@@ -387,8 +420,10 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
   private int mProgram;
   private int muMVPMatrixHandle;
   private Texture textureModernNeedle;
+  private Texture textureOrienteeringMap;
   private Texture textureModernBody;
   private VertexBuffer vertexBufferNeedle;
+  private VertexBuffer vertexBufferOrienteeringMap;
   private VertexBuffer vertexBufferBody;
   private int maPositionHandle;
   private int maTextureHandle;
