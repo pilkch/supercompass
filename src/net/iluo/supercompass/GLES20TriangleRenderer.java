@@ -162,9 +162,8 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
     mCompassValues[1] = 0.0f;
     mCompassValues[2] = 0.0f;
     mContext = context;
-    textureModernNeedle = new Texture();
     textureOrienteeringMap = new Texture();
-    textureModernBody = new Texture();
+    textureOrienteering = new Texture();
 
     {
       GeometryBuilder builder = new GeometryBuilder();
@@ -183,8 +182,8 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
       final float width = 1.4f;
       final float height = 3.0f;
       builder.PushBackRectangle(x, y, width, height, 0.5f, 0.0f, 1.0f, 1.0f);
-      vertexBufferBody = new VertexBuffer();
-      vertexBufferBody.CreateFromMemory(builder.GetBuffer());
+      vertexBufferOrienteeringBody = new VertexBuffer();
+      vertexBufferOrienteeringBody.CreateFromMemory(builder.GetBuffer());
     }
     {
       GeometryBuilder builder = new GeometryBuilder();
@@ -192,9 +191,9 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
       final float y = 0.0f;
       final float width = 1.4f;
       final float height = 1.4f;
-      builder.PushBackRectangle(x, y, width, height);
-      vertexBufferNeedle = new VertexBuffer();
-      vertexBufferNeedle.CreateFromMemory(builder.GetBuffer());
+      builder.PushBackRectangle(x, y, width, height, 0.0f, 0.5f, 0.5f, 1.0f);
+      vertexBufferOrienteeringNeedle = new VertexBuffer();
+      vertexBufferOrienteeringNeedle.CreateFromMemory(builder.GetBuffer());
     }
   }
 
@@ -241,56 +240,52 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
 
     {
       GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-      textureModernBody.Bind();
+      textureOrienteering.Bind();
 
-      vertexBufferBody.Bind();
+      {
+        vertexBufferOrienteeringBody.Bind();
 
-      float[] mMMatrix = new float[16];
-      Matrix.setIdentityM(mMMatrix, 0);
+        float[] mMMatrix = new float[16];
+        Matrix.setIdentityM(mMMatrix, 0);
 
-      Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
-      Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
+        Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
+        Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
 
-      GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
+        GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
 
-      vertexBufferBody.Render();
+        vertexBufferOrienteeringBody.Render();
 
-      vertexBufferBody.UnBind();
+        vertexBufferOrienteeringBody.UnBind();
+      }
 
-      GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-      textureModernBody.UnBind();
-    }
+      {
+        vertexBufferOrienteeringNeedle.Bind();
 
-    {
-      GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-      textureModernNeedle.Bind();
+        float[] mRotationMatrix = new float[16];
+        Matrix.setIdentityM(mRotationMatrix, 0);
+        final float angle = -mCompassValues[0];
+        Matrix.rotateM(mRotationMatrix, 0, angle, 0, 0, 1.0f);
 
-      vertexBufferNeedle.Bind();
+        float[] mTranslationMatrix = new float[16];
+        Matrix.setIdentityM(mTranslationMatrix, 0);
+        final float y = -0.5f;
+        Matrix.translateM(mTranslationMatrix, 0, 0.0f, y, 0.0f);
 
-      float[] mRotationMatrix = new float[16];
-      Matrix.setIdentityM(mRotationMatrix, 0);
-      final float angle = -mCompassValues[0];
-      Matrix.rotateM(mRotationMatrix, 0, angle, 0, 0, 1.0f);
+        float[] mMMatrix = new float[16];
+        Matrix.multiplyMM(mMMatrix, 0, mTranslationMatrix, 0, mRotationMatrix, 0);
 
-      float[] mTranslationMatrix = new float[16];
-      Matrix.setIdentityM(mTranslationMatrix, 0);
-      final float y = -0.5f;
-      Matrix.translateM(mTranslationMatrix, 0, 0.0f, y, 0.0f);
+        Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
+        Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
 
-      float[] mMMatrix = new float[16];
-      Matrix.multiplyMM(mMMatrix, 0, mTranslationMatrix, 0, mRotationMatrix, 0);
+        GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
 
-      Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, mMMatrix, 0);
-      Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
+        vertexBufferOrienteeringNeedle.Render();
 
-      GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, mMVPMatrix, 0);
-
-      vertexBufferNeedle.Render();
-
-      vertexBufferNeedle.UnBind();
+        vertexBufferOrienteeringNeedle.UnBind();
+      }
 
       GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-      textureModernNeedle.UnBind();
+      textureOrienteering.UnBind();
     }
   }
 
@@ -325,9 +320,8 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
       throw new RuntimeException("Could not get attrib location for uMVPMatrix");
     }
 
-    textureModernNeedle.CreateFromResource(R.raw.modern_needle);
     textureOrienteeringMap.CreateFromResource(R.raw.orienteering_map);
-    textureModernBody.CreateFromResource(R.raw.modern_body);
+    textureOrienteering.CreateFromResource(R.raw.orienteering);
 
     Matrix.setLookAtM(mVMatrix, 0, 0, 0, -5, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
   }
@@ -419,12 +413,11 @@ class GLES20TriangleRenderer implements GLSurfaceView.Renderer {
 
   private int mProgram;
   private int muMVPMatrixHandle;
-  private Texture textureModernNeedle;
   private Texture textureOrienteeringMap;
-  private Texture textureModernBody;
-  private VertexBuffer vertexBufferNeedle;
+  private Texture textureOrienteering;
   private VertexBuffer vertexBufferOrienteeringMap;
-  private VertexBuffer vertexBufferBody;
+  private VertexBuffer vertexBufferOrienteeringBody;
+  private VertexBuffer vertexBufferOrienteeringNeedle;
   private int maPositionHandle;
   private int maTextureHandle;
 
